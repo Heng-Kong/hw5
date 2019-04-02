@@ -1,0 +1,288 @@
+1.频域低通滤波器：设计低通滤波器包括 butterworth and Gaussian (选择合适的半径，计算功率谱比),平滑测试图像test1和2;分析各自优缺点；
+
+clear all
+close all
+clc
+%------------------------------------Butterworth lowpass filter------------------------------------
+%频域滤波
+f=imread('test1.pgm');%将图像test1存入矩阵f
+fp=double(f);   %将图像test1进行2倍扩充
+F1=fft2(fp);   %将扩充后的图像进行DFT变换
+F=fftshift(F1);  %将变换后的图像频谱从矩阵原点移到矩阵中心
+butterworth_n=3;  %设置Butterworth lowpass filter 的阶数
+D0=90;  %设置filter 的半径（截止频率）
+[m,n]=size(F);   %输出频谱的维数
+for u=1:m
+    for v=1:n
+        D(u,v)=sqrt((u-m/2)^2+(v-n/2)^2);    
+        H(u,v)=1/(1+(D(u,v)/D0)^(2*butterworth_n));   %生成Butterworth lowpass filter 实对称滤波函数H(u,v)
+        G(u,v)=H(u,v)*F(u,v);     %对原图像进行滤波
+    end 
+end
+Gp=ifftshift(G);   %将滤波后的频谱从矩阵原点移到矩阵中心
+gp=ifft2(Gp);   %对变换后的频谱求傅里叶反变换
+g=uint8(real(gp));  %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+%-------------------------------------------------------------------------------------------------
+%实验结果图像
+subplot(2,2,1)
+imshow(f)
+title('test2原始图像');
+subplot(2,2,2)
+imshow(g);
+title('滤波后图像（n=3,D0=90)');  %分两行两列分别显示源图像、滤波后图像、源图像频谱和滤波后图像频谱
+subplot(2,2,3)
+imshow(abs(255.*F./max(max(F))));
+title('test2的频谱');
+subplot(2,2,4)
+imshow(abs(255.*G./max(max(G))));
+title('滤波后图像的频谱');
+%--------------------------------------------------------------------------------------------
+%计算功率谱比
+Pt=0;
+P=0;
+for u=1:m
+    for v=1:n
+        Pt0=(abs(G(u,v)))^2;
+        P0=(abs(F(u,v)))^2;
+        Pt=Pt0+Pt;
+        P=P0+P;
+    end 
+end
+power_rate=100*Pt/P   %输出功率谱比
+
+%-----------------------------------------Guass lowpass filter--------------------------------------------------
+%频域滤波
+f=imread('test2.tif');
+fp=double(f);   %将图像test2进行2倍扩充
+F1=fft2(fp);   %将扩充后的图像进行DFT变换
+F=fftshift(F1);  %将变换后的图像频谱从矩阵原点移到矩阵中心
+D0=80;  %设置filter 的半径（截止频率）
+[m,n]=size(F);   %输出频谱的维数
+for u=1:m
+    for v=1:n
+        D(u,v)=sqrt((u-m/2)^2+(v-n/2)^2);    
+        H(u,v)=exp(-D(u,v)^2/(2*D0^2));   %生成Guass lowpass filter 实对称滤波函数H(u,v)
+        G(u,v)=H(u,v)*F(u,v);     %对原图像进行滤波
+    end 
+end
+Gp=ifftshift(G);   %将滤波后的频谱从矩阵原点移到矩阵中心
+gp=ifft2(Gp);   %对变换后的频谱求傅里叶反变换
+g=uint8(real(gp));  %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+%-------------------------------------------------------------------------------------------
+%实验结果图像
+subplot(2,2,1)
+imshow(f)
+title('test2原始图像');
+subplot(2,2,2)
+imshow(g);
+title('滤波后图像（D0=80)');
+subplot(2,2,3)
+imshow(abs(255.*F./max(max(F))));  %分两行两列分别显示源图像、滤波后图像、源图像频谱和滤波后图像频谱
+title('test2的频谱');
+subplot(2,2,4)
+imshow(abs(255.*G./max(max(G))));
+title('滤波后图像的频谱');
+%--------------------------------------------------------------------------------------------
+%计算功率谱比
+Pt=0;
+P=0;
+for u=1:m
+    for v=1:n
+        Pt0=(abs(G(u,v)))^2;
+        P0=(abs(F(u,v)))^2;
+        Pt=Pt0+Pt;
+        P=P0+P;
+    end 
+end
+power_rate=100*Pt/P   %输出功率谱比
+
+
+
+
+
+
+2.频域高通滤波器：设计高通滤波器包括butterworth and Gaussian，在频域增强边缘。选择半径和计算功率谱比，测试图像test3,4：分析各自优缺点；
+clear all
+close all
+clc
+%---------------------------------------Butterworth highpass filter----------------------------------------------------
+%频域滤波
+f=imread('test4 copy.bmp');%将图像test4存入矩阵f
+fp=double(f);   %将图像test3_corrupt进行2倍扩充
+F1=fft2(fp);   %将扩充后的图像进行DFT变换
+F=fftshift(F1);  %将变换后的图像频谱从矩阵原点移到矩阵中心
+butterworth_n=2;  %设置Butterworth highpass filter 的阶数
+D0=10;  %设置filter 的半径（截止频率）
+[m,n]=size(F);   %输出频谱的维数
+for u=1:m
+    for v=1:n
+        D(u,v)=sqrt((u-m/2)^2+(v-n/2)^2);    
+        H(u,v)=1/(1+D0/(D(u,v))^(2*butterworth_n));   %生成Butterworth highpass filter 实对称滤波函数H(u,v)
+        G(u,v)=H(u,v)*F(u,v);     %对原图像进行滤波
+    end 
+end
+Gp=ifftshift(G);   %将滤波后的频谱从矩阵原点移到矩阵中心
+gp=ifft2(Gp);   %对变换后的频谱求傅里叶反变换
+g=uint8(real(gp));  %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+%-------------------------------------------------------------------------------------------
+%实验结果图像
+subplot(2,2,1)
+imshow(f)
+title('test4 copy原始图像');
+subplot(2,2,2)
+imshow(g);
+title('滤波后图像（n=2,D0=10)');
+subplot(2,2,3)
+imshow(abs(255.*F./max(max(F))));
+title('test4 copy的频谱');
+subplot(2,2,4)
+imshow(abs(255.*G./max(max(G))));
+title('滤波后图像的频谱');
+%--------------------------------------------------------------------------------------------
+%计算功率谱比
+Pt=0;
+P=0;
+for u=1:m
+    for v=1:n
+        Pt0=(abs(G(u,v)))^2;
+        P0=(abs(F(u,v)))^2;
+        Pt=Pt0+Pt;
+        P=P0+P;
+    end 
+end
+power_rate=100*Pt/P
+
+%--------------------------------------------Gauss highpass filter-----------------------------------------------
+%频域滤波
+f=imread('test4 copy.bmp');
+fp=double(f);   %将图像test3_corrupt进行2倍扩充
+F1=fft2(fp);   %将扩充后的图像进行DFT变换
+F=fftshift(F1);  %将变换后的图像频谱从矩阵原点移到矩阵中心
+D0=30;  %设置filter 的半径（截止频率）
+[m,n]=size(F);   %输出频谱的维数
+for u=1:m
+    for v=1:n
+        D(u,v)=sqrt((u-m/2)^2+(v-n/2)^2);    
+        H(u,v)=1-exp(-D(u,v)^2/(2*D0^2));   %生成Gauss highpass filter 实对称滤波函数H(u,v)
+        G(u,v)=H(u,v)*F(u,v);     %对原图像进行滤波
+    end 
+end
+Gp=ifftshift(G);   %将滤波后的频谱从矩阵原点移到矩阵中心
+gp=ifft2(Gp);   %对变换后的频谱求傅里叶反变换
+g=uint8(real(gp));  %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+%-------------------------------------------------------------------------------------------
+%实验结果图像
+subplot(2,2,1)
+imshow(f)
+title('test4 copy原始图像');
+subplot(2,2,2)
+imshow(g);
+title('滤波后图像（D0=30)');
+subplot(2,2,3)
+imshow(abs(255.*F./max(max(F))));
+title('test4 copy的频谱');
+subplot(2,2,4)
+imshow(abs(255.*G./max(max(G))));
+title('滤波后图像的频谱');
+%--------------------------------------------------------------------------------------------
+%计算功率谱比
+Pt=0;
+P=0;
+for u=1:m
+    for v=1:n
+        Pt0=(abs(G(u,v)))^2;
+        P0=(abs(F(u,v)))^2;
+        Pt=Pt0+Pt;
+        P=P0+P;
+    end 
+end
+power_rate=100*Pt/P
+
+
+
+
+3其他高通滤波器：拉普拉斯和Unmask，对测试图像test3,4滤波；分析各自优缺点；
+
+clear all
+close all
+clc
+%-----------------------------------Laplace算子--------------------------------
+f=imread('test3_corrupt.pgm');%将图像test3存入矩阵f
+fp=double(f);  %将图像test3进行2倍扩充
+Fp=fft2(fp);   %将扩充后的图像进行DFT变换
+F=fftshift(Fp);  %将变换后的图像频谱从矩阵原点移到矩阵中心
+[m,n]=size(F);   %将图像像素矩阵的行数和列数存入数组[m,n]
+c=1;
+for u=1:m
+    for v=1:n
+        D(u,v)=sqrt((u-m/2)^2+(v-n/2)^2);
+        H(u,v)=c*4*pi^2*D(u,v)^2;     %;laplace高通滤波
+        F1(u,v)=F(u,v)*H(u,v);      %将图像频谱与laplace高通滤波函数频谱阵列相乘
+    end 
+end
+f1=ifftshift(F1);  %将滤波后的频谱从矩阵原点移到矩阵中心
+f2=ifft2(f1);    %对变换后的频谱求傅里叶反变换
+f2=uint8(real(f2));  %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+%归一化----------------------------------------------------------------------------
+maxf2=max(max(real(f2)));
+for u=1:m
+    for v=1:n
+        g(u,v)=fp(u,v)+f2(u,v)/maxf2;
+    end
+end
+g=uint8(real(g));  %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+G=fft2(g);   %对归一化后的图像求傅里叶变换
+G=fftshift(G);  %将变换后的图像频谱从矩阵原点移到矩阵中心
+subplot(3,2,1)
+imshow(f);
+title('test3原始图像');
+subplot(3,2,2)
+imshow(g);
+title('test3经Laplace滤波后图像');
+subplot(3,2,3)
+imshow(abs(255.*F./max(F(:))));
+title('test3原始图像频谱');
+subplot(3,2,4)
+imshow(abs(255.*G./max(G(:))));
+title('滤波后图像的频谱');
+subplot(3,2,5)
+imshow(f2);
+title('test3的laplace图像'); 
+subplot(3,2,6)
+imshow(abs(255.*H./max(H(:))));
+title('laplace频谱');
+
+f=imread('test3_corrupt.pgm');%将图像test3存入矩阵f
+fp=double(f);%将图像test3进行2倍扩充
+F=fft2(fp); %将扩充后的图像进行DFT变换
+F=fftshift(F); %将变换后的图像频谱从矩阵原点移到矩阵中心
+[m,n]=size(F);%将图像像素矩阵的行数和列数存入数组[m,n]
+
+%------------------------------------------unmask----------------------------------------
+k1=1;
+k2=1;  %设置参数k1、k2
+D0=70;  %设置滤波半径D0
+for u=1:m
+    for v=1:n
+        D(u,v)=sqrt((u-m/2)^2+(v-n/2)^2);
+        H(u,v)=1-exp(-D(u,v)^2/(2*D0^2));  %unmask 滤波频谱
+        G(u,v)=(k1+k2*H(u,v))*F(u,v);   %将图像频谱与unmask高通滤波函数频谱阵列相乘
+    end
+end
+Gp=ifftshift(G);  %将滤波后的频谱从矩阵原点移到矩阵中心
+gp=ifft2(Gp); %对变换后的频谱求傅里叶反变换
+g=uint8(real(gp)); %为忽略计算不准确带来的寄生复量，选择实部，并从左上象限提取和原始图像相同大小的区域
+subplot(2,2,1)
+imshow(f);
+title('test3原始图像');
+subplot(2,2,2)
+imshow(g);
+title('test3 unmask滤波后图像(k1=1,k2=1,D0=70)');
+subplot(2,2,3)
+imshow(abs(255*F./max(F(:))));
+title('原始图像频谱');
+subplot(2,2,4)
+imshow(abs(255*G/max(G(:))));
+title('unmask滤波后频谱');
+
+
